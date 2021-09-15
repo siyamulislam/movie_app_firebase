@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as Path;
 
 class DBSQFLiteHelper {
+  // ignore: non_constant_identifier_names
   static final String CREATE_MOVIE_TABLE = '''create table $MOVIE_TABLE(
 $MOVIE_COL_ID  integer primary key autoincrement,
 $MOVIE_COL_NAME text not null,

@@ -1,10 +1,11 @@
-import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:movie_hub/db/sqflite_db.dart';
+import 'package:movie_hub/db/firebase_db.dart';
 import 'package:movie_hub/model/movie_model.dart';
 import 'movie_details.dart';
 
+// ignore: must_be_immutable
 class MovieItem extends StatefulWidget {
   // const MovieItem({ Key? key }) : super(key: key);
   final Movies? e;
@@ -20,7 +21,7 @@ class _MovieItemState extends State<MovieItem> {
   @override
   Widget build(BuildContext context) {
     return Dismissible(
-      key: ValueKey(widget.e!.id),
+      key: UniqueKey(),
       background: Container(
         alignment: Alignment.centerRight,
         padding: EdgeInsets.all(25),
@@ -37,19 +38,18 @@ class _MovieItemState extends State<MovieItem> {
       ),
       direction: DismissDirection.endToStart,
       onDismissed: (direction) {
-        DBSQFLiteHelper.deleteMovieByID(widget.e!.id).then((value) {
+        DBFirebaseHelper.deleteMovieByID(widget.e!.docId).then((value) {
+          widget.refresh!();
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text("Movie Deleted"),
-            duration: Duration(seconds: 4),
-            action: SnackBarAction(label: 'Undo', onPressed: () {}),
+          
+            action: SnackBarAction(label: 'OK', onPressed: () {}),
           ));
         });
       },
       confirmDismiss: (direction) {
         return showDialog(
           context: context,
-          // barrierDismissible: true,
-          // barrierColor: Colors.red.withOpacity(.5),
           builder: (context) {
             return AlertDialog(
               title: Row(
@@ -71,7 +71,9 @@ class _MovieItemState extends State<MovieItem> {
                     onPressed: () => Navigator.of(context).pop(false),
                     child: Text("CANCEL")),
                 ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(true),
+                    onPressed: () {
+                      Navigator.of(context).pop(true);
+                    },
                     child: Text("CONFIRM"))
               ],
               elevation: 5,
@@ -81,18 +83,14 @@ class _MovieItemState extends State<MovieItem> {
       },
       child: InkWell(
         onTap: () {
+          // ignore: unnecessary_statements
           null;
           Navigator.push(
               context,
               //MaterialPageRoute(builder: (context) => MovieDetails(widget.e.id)));
               MaterialPageRoute(
-                  builder: (context) => MovieDetails(widget.e!.id))).then(
+                  builder: (context) => MovieDetails(widget.e!.docId))).then(
               (value) {
-            // Future.delayed(Duration(milliseconds: 3000),(){
-            //
-            //   Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomePage()));
-            // });
-            //widget.onCountSelected!(); with null safety
             widget.refresh!();
           });
         },
@@ -111,18 +109,32 @@ class _MovieItemState extends State<MovieItem> {
                         topLeft: Radius.circular(8),
                         topRight: Radius.circular(8)),
                     child: Hero(
-                      tag: widget.e!.id ?? '',
-                      child: Image.file(File(widget.e!.image ?? ''),
-                          height: 150,
-                          width: double.infinity,
-                          fit: BoxFit.cover),
+                      tag: widget.e!.docId ?? '',
+                      child: 
+                      // widget.e!.imageURL ==null?  Center(child: CircularProgressIndicator(color: Colors.white,),)
+                      // :
+                      // Image.network(widget.e!.imageURL ?? '',
+                      //     height: 150,
+                      //     width: double.infinity,
+                      //     fit: BoxFit.cover),
+
+                      FadeInImage.assetNetwork(
+                        fadeInDuration: Duration(seconds: 1),
+                        //fadeOutDuration: Duration(seconds: 1),
+                        fadeInCurve: Curves.bounceIn,
+                        //fadeOutCurve: Curves.bounceInOut,
+                        height: 150,
+                           width: double.infinity,
+                           fit: BoxFit.cover,
+                        placeholder: 'assets/images/ph.png',
+                         image: widget.e!.imageURL ?? ''),
                     ),
                   ),
                   Positioned(
                     top: 10,
                     right: 10,
                     child: Container(
-                      width: MediaQuery.of(context).size.width / 5,
+                      width: MediaQuery.of(context).size.width / 2,
                       padding: EdgeInsets.all(5),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
@@ -130,7 +142,7 @@ class _MovieItemState extends State<MovieItem> {
                       ),
                       child: FittedBox(
                         child: Text(
-                          'Rank: ' + widget.e!.id.toString() + '',
+                          'UID: ' + widget.e!.docId.toString() + '',
                           style: TextStyle(color: Colors.white, fontSize: 20),
                         ),
                       ),
@@ -232,7 +244,6 @@ class _MovieItemState extends State<MovieItem> {
                                     onPressed: () => _changeFav()),
                               ));
                             }
-                            ;
                           },
                         ),
 
@@ -251,7 +262,7 @@ class _MovieItemState extends State<MovieItem> {
 
   _changeFav() {
     setState(() {
-      DBSQFLiteHelper.updateMovieFav(widget.e!.id, widget.e!.isfav);
+      DBFirebaseHelper.updateMovieFav(widget.e!.docId, widget.e!.isfav);
       widget.e!.isfav = !widget.e!.isfav;
     });
   }

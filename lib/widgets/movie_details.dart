@@ -1,22 +1,26 @@
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
-import 'package:movie_hub/db/sqflite_db.dart';
+import 'package:movie_hub/db/firebase_db.dart';
 import 'package:movie_hub/db/temp_db.dart';
 import 'package:movie_hub/model/movie_model.dart';
 
+// ignore: must_be_immutable
 class MovieDetails extends StatefulWidget {
-  int? id;
+  String? docId;
 
-  MovieDetails(this.id);
+  MovieDetails(this.docId);
 
   @override
   _MovieDetailsState createState() => _MovieDetailsState();
 }
 
 class _MovieDetailsState extends State<MovieDetails> {
+ // bool isLoading= false;
   @override
   void initState() {
+    // ignore: todo
     // TODO: implement initState
 
     super.initState();
@@ -32,10 +36,14 @@ class _MovieDetailsState extends State<MovieDetails> {
       },
       child: Scaffold(
         body: FutureBuilder(
-          future: DBSQFLiteHelper.getMovieByID(widget.id),
+          future: DBFirebaseHelper.getMovieByID(widget.docId),
           builder: (context, AsyncSnapshot<Movies> snapshot) {
             // print(snapshot.data.id);
+               
+               //  isLoading=false;
+              
             if (snapshot.hasData) {
+            
               return CustomScrollView(
                 slivers: [
                   SliverAppBar(
@@ -45,8 +53,14 @@ class _MovieDetailsState extends State<MovieDetails> {
                     expandedHeight: 300,
                     flexibleSpace: FlexibleSpaceBar(
                         background: Hero(
-                            tag: snapshot.data!.id ?? 0,
-                            child: Image.file(File(snapshot.data!.image ?? ''),
+                            tag: snapshot.data!.docId ?? 0,
+                           // child: Image.file(File(snapshot.data!.image ?? ''),
+                            child:
+                            // isLoading?  
+                            // Center(child: CircularProgressIndicator(color: Colors.white,),)
+                            //     :
+                            
+                            Image.network(snapshot.data!.imageURL ?? '',
                                 fit: BoxFit.cover)),
                         title: Text(snapshot.data!.name ?? 'no name')),
 
@@ -105,9 +119,9 @@ class _MovieDetailsState extends State<MovieDetails> {
                                               TextButton(
                                                 onPressed: () {
                                                   setState(() {
-                                                    DBSQFLiteHelper
+                                                    DBFirebaseHelper
                                                         .updateMovieName(
-                                                            widget.id,
+                                                            widget.docId,
                                                             controllerTitle
                                                                 .text);
                                                   });
@@ -147,9 +161,9 @@ class _MovieDetailsState extends State<MovieDetails> {
                               color: Colors.amber,
                             ),
                             onRatingUpdate: (rating) {
-                              DBSQFLiteHelper.updateMovieRating(
-                                  widget.id, rating);
-                              setState(() {});
+                               DBFirebaseHelper.updateMovieRating(
+                                   widget.docId, rating);
+                               setState(() {});
                             },
                           ),
                           SizedBox(

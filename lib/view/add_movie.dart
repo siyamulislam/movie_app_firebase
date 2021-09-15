@@ -204,7 +204,6 @@ class _Add_MovieState extends State<Add_Movie> {
   _saveData() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      //movie.id=movies.length+1;
       movie.releaseDate = dt!.millisecondsSinceEpoch;
       movie.category = category;
       movie.image = _imagePath;
